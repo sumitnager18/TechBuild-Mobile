@@ -1,0 +1,6 @@
+{
+  "name": "PC Technician Simulator",
+  "description": "Tactile mobile-first 3D PC technician simulation vertical slice featuring hardware assembly, camera focus zones, thermal paste mechanics, power graph, POST diagnostics, and complete Unity 6 C# architecture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

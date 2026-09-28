@@ -1,0 +1,25 @@
+namespace PCTechnician.Diagnostics
+{
+    public enum DiagnosticFaultCode
+    {
+        NONE,
+        CPU_NOT_INSTALLED,
+        CPU_SOCKET_MISMATCH,
+        CPU_POWER_MISSING,
+        DRAM_NOT_SEATED,
+        DRAM_TYPE_MISMATCH,
+        COOLER_NOT_MOUNTED,
+        COOLER_LOOSE_SCREWS,
+        FAN_HEADER_DISCONNECTED,
+        THERMAL_PASTE_MISSING,
+        THERMAL_PASTE_DEGRADED,
+        THERMAL_RUNAWAY,
+        GPU_NOT_SEATED,
+        GPU_POWER_MISSING,
+        PSU_INSUFFICIENT_WATTAGE,
+        PSU_MISSING_CABLES,
+        ATX_24PIN_DISCONNECTED,
+        STORAGE_NOT_FASTENED,
+        STORAGE_NOT_DETECTED
+    }
+}

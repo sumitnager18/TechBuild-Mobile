@@ -242,9 +242,9 @@ namespace PCTechnician.Simulation
         {
             if (compatibility.IsCompatible) return;
             result.DiagnosticFaults.Add(DiagnosticResult.Error(
-                MapCompatibilityCode(compatibility.Code, fallbackCode),
+                MapCompatibilityCode(compatibility.ErrorCode, fallbackCode),
                 subsystem,
-                compatibility.Message,
+                compatibility.UserMessage,
                 target));
         }
 

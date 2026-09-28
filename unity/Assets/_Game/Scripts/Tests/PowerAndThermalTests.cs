@@ -9,8 +9,8 @@ using PCTechnician.Thermal;
 namespace PCTechnician.Tests
 {
     /// <summary>
-    /// Automated test suite validating Stage 2 Power Graph, Thermal Model, and Determinism.
-    /// Pure C# test suite executing without UnityEngine GameObject or scene dependencies.
+    /// Automated test suite validating Stage 2.1 power, thermal, compatibility, and determinism.
+    /// Uses ScriptableObject data definitions but has no scene/GameObject dependency.
     /// </summary>
     public static class PowerAndThermalTests
     {
@@ -42,6 +42,22 @@ namespace PCTechnician.Tests
                 }
             }
 
+            var cpuData = UnityEngine.ScriptableObject.CreateInstance<CPUData>();
+            cpuData.SetRuntimeValues("cpu_01", "NovaCore N7 7600", "NovaCore", "AM5_FICTIONAL", 105, 142);
+
+            var moboData = UnityEngine.ScriptableObject.CreateInstance<MotherboardData>();
+            moboData.SetRuntimeValues("mobo_01", "ApexForge A870", "ApexForge", "AM5_FICTIONAL", "DDR5");
+
+            var ramData = UnityEngine.ScriptableObject.CreateInstance<RAMData>();
+            ramData.SetRuntimeValues("ram_01", "TitanRAM 32", "TitanRAM", "DDR5", 32);
+
+            var coolerData = UnityEngine.ScriptableObject.CreateInstance<CoolerData>();
+            coolerData.SetRuntimeValues("cooler_01", "ArcticBreeze A4", "ArcticBreeze", "AM5_FICTIONAL", 180);
+
+            var psuData = UnityEngine.ScriptableObject.CreateInstance<PSUData>();
+            psuData.SetRuntimeValues("psu_01", "VoltEdge 750", "VoltEdge", 750, "Standard");
+
+
             // ==========================================
             // POWER TESTS (TC-11 to TC-15)
             // ==========================================
@@ -61,15 +77,16 @@ namespace PCTechnician.Tests
             // TC-13: Missing CPU EPS produces CPU power fault
             var snapshot13 = new SimulationSnapshot
             {
-                CpuId = "NovaCore_N7_7600",
-                MotherboardId = "ApexForge_A870",
-                CoolerId = "ArcticBreeze_A4",
+                CpuId = "cpu_01",
+                MotherboardId = "mobo_01",
+                CoolerId = "cooler_01",
+                PsuId = "psu_01",
                 CpuSocketLatched = true,
-                RamModuleIds = new List<string> { "TitanRAM_32" },
+                RamModuleIds = new List<string> { "ram_01" },
                 RamLatched = true,
                 ConnectedPowerRails = new List<string> { SimulationEvaluator.RAIL_24PIN } // Missing CPU EPS!
             };
-            var eval13 = SimulationEvaluator.Evaluate(snapshot13, null, null, null, null, null, null, null);
+            var eval13 = SimulationEvaluator.Evaluate(snapshot13, moboData, cpuData, ramData, null, coolerData, psuData, null);
             bool hasCpuPowerFault = eval13.DiagnosticFaults.Exists(f => f.FaultCode == DiagnosticFaultCode.CPU_POWER_MISSING);
             Assert(hasCpuPowerFault && !eval13.CanPostSucceed, "TC-13", "Missing CPU EPS rail causes CPU_POWER_MISSING fault and POST failure.");
 
@@ -78,22 +95,24 @@ namespace PCTechnician.Tests
             gpuData14.SetRuntimeValues("gpu_01", "VectorX VX-780", "VectorX", 220, 1);
             var snapshot14 = new SimulationSnapshot
             {
-                CpuId = "NovaCore_N7_7600",
-                GpuId = "VectorX_VX_780",
+                CpuId = "cpu_01",
+                GpuId = "gpu_01",
+                MotherboardId = "mobo_01",
+                PsuId = "psu_01",
                 CpuSocketLatched = true,
-                CoolerId = "ArcticBreeze_A4",
+                CoolerId = "cooler_01",
                 RamModuleIds = new List<string> { "TitanRAM_32" },
                 RamLatched = true,
                 ConnectedPowerRails = new List<string> { SimulationEvaluator.RAIL_24PIN, SimulationEvaluator.RAIL_CPU_EPS } // Missing PCIe!
             };
-            var eval14 = SimulationEvaluator.Evaluate(snapshot14, null, null, null, gpuData14, null, null, null);
+            var eval14 = SimulationEvaluator.Evaluate(snapshot14, moboData, cpuData, ramData, gpuData14, coolerData, psuData, null);
             bool hasGpuPowerFault = eval14.DiagnosticFaults.Exists(f => f.FaultCode == DiagnosticFaultCode.GPU_POWER_MISSING);
             Assert(hasGpuPowerFault && !eval14.IsGpuPowered, "TC-14", "Missing PCIe power to dedicated GPU causes GPU_POWER_MISSING fault.");
 
             // TC-15: Insufficient PSU produces insufficient-power status
             var psuWeak = UnityEngine.ScriptableObject.CreateInstance<PSUData>();
             psuWeak.SetRuntimeValues("psu_weak", "VoltEdge 300", "VoltEdge", 300, "Standard");
-            var eval15 = SimulationEvaluator.Evaluate(snapshot14, null, null, null, gpuData14, null, psuWeak, null);
+            var eval15 = SimulationEvaluator.Evaluate(snapshot14, moboData, cpuData, ramData, gpuData14, coolerData, psuWeak, null);
             bool isPsuInsufficient = eval15.PSUStatusResult.Status == PSUStatus.Insufficient;
             Assert(isPsuInsufficient, "TC-15", "300W PSU evaluated as Insufficient for 385W system load.");
 
@@ -149,8 +168,8 @@ namespace PCTechnician.Tests
             // ==========================================
 
             // TC-21: Identical simulation state produces identical evaluation
-            var eval21A = SimulationEvaluator.Evaluate(snapshot14, null, null, null, gpuData14, null, psuWeak, null);
-            var eval21B = SimulationEvaluator.Evaluate(snapshot14, null, null, null, gpuData14, null, psuWeak, null);
+            var eval21A = SimulationEvaluator.Evaluate(snapshot14, moboData, cpuData, ramData, gpuData14, coolerData, psuWeak, null);
+            var eval21B = SimulationEvaluator.Evaluate(snapshot14, moboData, cpuData, ramData, gpuData14, coolerData, psuWeak, null);
             bool determinismMatches = eval21A.CanPostSucceed == eval21B.CanPostSucceed
                 && eval21A.EstimatedLoad.ContinuousLoadWatts == eval21B.EstimatedLoad.ContinuousLoadWatts
                 && eval21A.PSUStatusResult.Status == eval21B.PSUStatusResult.Status;
@@ -159,7 +178,7 @@ namespace PCTechnician.Tests
             // TC-22: Save/restore produces identical evaluation
             string jsonSnapshot = UnityEngine.JsonUtility.ToJson(snapshot14);
             var rehydrated = UnityEngine.JsonUtility.FromJson<SimulationSnapshot>(jsonSnapshot);
-            var eval22 = SimulationEvaluator.Evaluate(rehydrated, null, null, null, gpuData14, null, psuWeak, null);
+            var eval22 = SimulationEvaluator.Evaluate(rehydrated, moboData, cpuData, ramData, gpuData14, coolerData, psuWeak, null);
             bool rehydrateMatches = eval22.CanPostSucceed == eval21A.CanPostSucceed 
                 && eval22.DiagnosticFaults.Count == eval21A.DiagnosticFaults.Count;
             Assert(rehydrateMatches, "TC-22", "Rehydrated JSON snapshot produces identical evaluation results.");

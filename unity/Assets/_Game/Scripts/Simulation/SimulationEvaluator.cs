@@ -235,6 +235,7 @@ namespace PCTechnician.Simulation
             result.CanPostSucceed = result.IsAssembledCorrectly
                 && result.IsPoweredCorrectly
                 && result.IsCpuThermallySafe
+                && hasPsu
                 && result.PSUStatusResult.CanSafelyPowerContinuous;
 
             return result;

@@ -3,6 +3,7 @@ namespace PCTechnician.Diagnostics
     public enum DiagnosticFaultCode
     {
         NONE,
+        HARDWARE_DATA_MISSING,
         CPU_NOT_INSTALLED,
         CPU_SOCKET_MISMATCH,
         CPU_POWER_MISSING,
@@ -16,10 +17,13 @@ namespace PCTechnician.Diagnostics
         THERMAL_RUNAWAY,
         GPU_NOT_SEATED,
         GPU_POWER_MISSING,
+        GPU_PCIE_MISMATCH,
         PSU_INSUFFICIENT_WATTAGE,
         PSU_MISSING_CABLES,
+        PSU_SOURCE_CONNECTOR_MISSING,
         ATX_24PIN_DISCONNECTED,
         STORAGE_NOT_FASTENED,
-        STORAGE_NOT_DETECTED
+        STORAGE_NOT_DETECTED,
+        STORAGE_COMPATIBILITY_MISMATCH
     }
 }

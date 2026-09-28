@@ -30,13 +30,16 @@ namespace PCTechnician.Hardware
         public int ThermalOutputWatts => thermalOutputWatts;
         public int RequiredPcie8PinCables => requiredPcie8PinCables;
 
-        public void SetRuntimeValues(string id, string model, string mfg, int tdp, int pcie8Pins, int peakTransient = 320)
+        public void SetRuntimeValues(string id, string model, string mfg, int tdp, int pcie8Pins, int peakTransient = 320,
+            string generation = "Gen 5.0", string interfaceType = "PCIe_16x")
         {
             InitializeBase(id, model, mfg, ComponentCategory.GPU);
             tdpWatts = tdp;
             requiredPcie8PinCables = pcie8Pins;
             peakTransientWatts = peakTransient;
             thermalOutputWatts = tdp;
+            pcieGeneration = generation;
+            slotInterface = interfaceType;
         }
     }
 }

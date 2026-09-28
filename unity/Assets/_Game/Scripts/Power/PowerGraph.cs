@@ -88,6 +88,24 @@ namespace PCTechnician.Power
         // Backwards-compatible helper: automatically selects one unused source connector of the requested type.
         public bool ConnectRail(string nodeId, PowerConnectorType providedConnector, out string error)
         {
+            if (sourceConnectors.Count == 0)
+            {
+                if (!nodes.TryGetValue(nodeId, out var legacyNode))
+                {
+                    error = $"Power destination node '{nodeId}' does not exist.";
+                    return false;
+                }
+                if (legacyNode.ConnectorType != providedConnector)
+                {
+                    error = $"Connector mismatch: Node '{nodeId}' requires '{legacyNode.ConnectorType}', but provided '{providedConnector}'.";
+                    legacyNode.SetFault(error);
+                    return false;
+                }
+                legacyNode.Connect();
+                error = string.Empty;
+                return true;
+            }
+
             foreach (var pair in sourceConnectors)
             {
                 if (!pair.Value.IsConnected && pair.Value.ConnectorType == providedConnector)

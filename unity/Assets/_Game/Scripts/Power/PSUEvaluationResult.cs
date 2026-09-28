@@ -22,7 +22,7 @@ namespace PCTechnician.Power
 
         public bool CanSafelyPowerContinuous => Status == PSUStatus.Healthy || Status == PSUStatus.Marginal;
 
-        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, float messageCompatiblePlaceholder, string message)
+        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, float transientHeadroom, string message)
         {
             Status = status;
             RatedWattage = rated;

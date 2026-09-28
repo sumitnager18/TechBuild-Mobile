@@ -17,7 +17,10 @@ namespace PCTechnician.Hardware
 
         [Header("Expansion Slots")]
         [SerializeField] private int pcie16SlotCount = 1;
+        [SerializeField] private string pcieX16Generation = "Gen 5.0";
         [SerializeField] private int m2SlotCount = 2;
+        [SerializeField] private string m2FormFactor = "M2_2280";
+        [SerializeField] private string m2InterfaceProtocol = "NVMe_PCIe5";
 
         [Header("Power Inputs")]
         [SerializeField] private bool requires24Pin = true;
@@ -30,7 +33,10 @@ namespace PCTechnician.Hardware
         public int DimmSlotCount => dimmSlotCount;
         public int MaxMemoryCapacityGb => maxMemoryCapacityGb;
         public int PCIe16SlotCount => pcie16SlotCount;
+        public string PcieX16Generation => pcieX16Generation;
         public int M2SlotCount => m2SlotCount;
+        public string M2FormFactor => m2FormFactor;
+        public string M2InterfaceProtocol => m2InterfaceProtocol;
         public bool Requires24Pin => requires24Pin;
         public bool RequiresCpuEps8Pin => requiresCpuEps8Pin;
 

@@ -109,6 +109,21 @@ namespace PCTechnician.Tests
             bool hasGpuPowerFault = eval14.DiagnosticFaults.Exists(f => f.FaultCode == DiagnosticFaultCode.GPU_POWER_MISSING);
             Assert(hasGpuPowerFault && !eval14.IsGpuPowered, "TC-14", "Missing PCIe power to dedicated GPU causes GPU_POWER_MISSING fault.");
 
+            // TC-15a: Snapshot IDs must match supplied hardware assets
+            var mismatchedSnapshot = new SimulationSnapshot
+            {
+                CpuId = "cpu_DOES_NOT_MATCH",
+                MotherboardId = "mobo_01",
+                CoolerId = "cooler_01",
+                PsuId = "psu_01",
+                CpuSocketLatched = true,
+                RamModuleIds = new List<string> { "ram_01" },
+                RamLatched = true
+            };
+            var mismatchEval = SimulationEvaluator.Evaluate(mismatchedSnapshot, moboData, cpuData, ramData, null, coolerData, psuData, null);
+            Assert(mismatchEval.DiagnosticFaults.Exists(f => f.FaultCode == DiagnosticFaultCode.HARDWARE_ID_MISMATCH),
+                "TC-15a", "Snapshot hardware identity mismatch is surfaced as a structured fault.");
+
             // TC-15: Insufficient PSU produces insufficient-power status
             var psuWeak = UnityEngine.ScriptableObject.CreateInstance<PSUData>();
             psuWeak.SetRuntimeValues("psu_weak", "VoltEdge 300", "VoltEdge", 300, "Standard");

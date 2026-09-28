@@ -22,14 +22,19 @@ namespace PCTechnician.Power
 
         public bool CanSafelyPowerContinuous => Status == PSUStatus.Healthy || Status == PSUStatus.Marginal;
 
-        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, float transientHeadroom, string message)
+        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, float messageCompatiblePlaceholder, string message)
         {
             Status = status;
             RatedWattage = rated;
             ContinuousHeadroomWatts = continuousHeadroom;
             PeakHeadroomWatts = peakHeadroom;
-            TransientHeadroomWatts = transientHeadroom;
+            TransientHeadroomWatts = messageCompatiblePlaceholder;
             Message = message;
+        }
+
+        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, string message)
+            : this(status, rated, continuousHeadroom, peakHeadroom, peakHeadroom, message)
+        {
         }
     }
 }

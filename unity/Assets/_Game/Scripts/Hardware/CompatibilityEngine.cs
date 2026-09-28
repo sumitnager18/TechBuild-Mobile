@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace PCTechnician.Hardware
 {
@@ -111,9 +112,10 @@ namespace PCTechnician.Hardware
         private static int ParseGeneration(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
-            var normalized = value.Trim().ToLowerInvariant().Replace("gen", "").Replace("pcie", "").Replace(" ", "").Replace(".", "");
-            if (float.TryParse(normalized, System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture, out var number))
+            var match = Regex.Match(value, @"([0-9]+(?:\\.[0-9]+)?)");
+            if (match.Success &&
+                float.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var number))
                 return (int)Math.Round(number * 10.0);
             return 0;
         }

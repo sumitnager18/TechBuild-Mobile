@@ -4,6 +4,7 @@ namespace PCTechnician.Diagnostics
     {
         NONE,
         HARDWARE_DATA_MISSING,
+        HARDWARE_ID_MISMATCH,
         CPU_NOT_INSTALLED,
         CPU_SOCKET_MISMATCH,
         CPU_POWER_MISSING,

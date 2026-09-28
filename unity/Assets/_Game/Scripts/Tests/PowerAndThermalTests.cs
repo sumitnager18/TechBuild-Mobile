@@ -101,7 +101,7 @@ namespace PCTechnician.Tests
                 PsuId = "psu_01",
                 CpuSocketLatched = true,
                 CoolerId = "cooler_01",
-                RamModuleIds = new List<string> { "TitanRAM_32" },
+                RamModuleIds = new List<string> { "ram_01" },
                 RamLatched = true,
                 ConnectedPowerRails = new List<string> { SimulationEvaluator.RAIL_24PIN, SimulationEvaluator.RAIL_CPU_EPS } // Missing PCIe!
             };
@@ -115,6 +115,15 @@ namespace PCTechnician.Tests
             var eval15 = SimulationEvaluator.Evaluate(snapshot14, moboData, cpuData, ramData, gpuData14, coolerData, psuWeak, null);
             bool isPsuInsufficient = eval15.PSUStatusResult.Status == PSUStatus.Insufficient;
             Assert(isPsuInsufficient, "TC-15", "300W PSU evaluated as Insufficient for 385W system load.");
+
+            // TC-15b: one physical PSU connector cannot be consumed twice
+            var sourceGraph = new PowerGraph();
+            sourceGraph.AddSourceConnector(new PowerSourceConnector("PSU_PCIE8_1", "psu_01", PowerConnectorType.PCIe8Pin, 300));
+            sourceGraph.AddNode(new PowerNode("GPU_A", "psu_01", "gpu_a", PowerConnectorType.PCIe8Pin, 300, 150));
+            sourceGraph.AddNode(new PowerNode("GPU_B", "psu_01", "gpu_b", PowerConnectorType.PCIe8Pin, 300, 150));
+            bool firstSourceUse = sourceGraph.ConnectRail("GPU_A", "PSU_PCIE8_1", out _);
+            bool secondSourceUse = sourceGraph.ConnectRail("GPU_B", "PSU_PCIE8_1", out _);
+            Assert(firstSourceUse && !secondSourceUse, "TC-15b", "A physical PSU connector cannot be connected to two destinations.");
 
             // ==========================================
             // THERMAL TESTS (TC-16 to TC-20)

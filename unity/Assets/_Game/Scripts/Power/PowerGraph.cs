@@ -43,6 +43,12 @@ namespace PCTechnician.Power
                 return false;
             }
 
+            if (node.IsConnected)
+            {
+                error = $"Power destination node '{nodeId}' is already connected to a source.";
+                return false;
+            }
+
             if (!sourceConnectors.TryGetValue(sourceConnectorId, out var source))
             {
                 error = $"Power source connector '{sourceConnectorId}' does not exist.";

@@ -1,5 +1,5 @@
 # PC Technician Simulator — Known Issues & Technical Constraints
-Version: Prototype 0.1.0
+Version: Prototype 0.1.0 — Stage 2.1
 
 ---
 
@@ -20,11 +20,15 @@ Version: Prototype 0.1.0
 
 ## 2. Technical Limitations in Current Prototype (0.1.0)
 
-1. **Multi-Touch Pinch Zoom**:
+1. **Native Unity compilation is not verified in this environment**:
+   - Repository read/write is available, but Unity 6 editor compilation, Android packaging, and device runtime remain external verification steps.
+   - Authored C# tests and the WebGL harness are not proof of native Unity compilation.
+
+2. **Multi-Touch Pinch Zoom**:
    - Current input manager supports single-touch selection and timed hold gestures. Pinch-to-zoom is deferred to Milestone 2 in favor of deterministic Camera Focus Zones to prevent disorientation.
-2. **Reverse Screw Driving**:
+3. **Reverse Screw Driving**:
    - Screws currently tighten in a single direction upon hold. Unscrewing toggle is handled via contextual action mode rather than dual-directional finger circling.
-3. **Sound Assets**:
+4. **Sound Assets**:
    - Sound synthesis uses browser WebAudio oscillators and noise buffers for mechanical clicks, fan whirs, and POST beeps. Production .wav audio files are marked as placeholder targets for Unity AudioSource mapping in Stage 8.
-4. **Thermal Paste Fluid Mesh Deformation**:
+5. **Thermal Paste Fluid Mesh Deformation**:
    - Paste application uses procedural radial dot expansion with coverage calculation rather than an expensive real-time Navier-Stokes fluid grid (aligning with Rule 5: simulate what the player perceives).

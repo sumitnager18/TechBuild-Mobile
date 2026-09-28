@@ -156,5 +156,5 @@ Calculates component temperatures without fluid dynamics or CFD grids:
   "powerSwitchOn": true
 }
 ```
-Contains ZERO GameObject instance references or scene memory pointers.
-Rehydration produces 100% bit-exact simulation evaluation.
+Contains no GameObject instance references or scene memory pointers.
+Rehydration is expected to produce the same deterministic evaluation for identical inputs; native Unity runtime verification remains required.

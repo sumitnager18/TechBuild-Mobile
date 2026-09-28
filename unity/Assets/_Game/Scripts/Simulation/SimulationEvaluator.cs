@@ -41,6 +41,13 @@ namespace PCTechnician.Simulation
             bool hasPsu = psu != null && !string.IsNullOrEmpty(snapshot.PsuId);
             bool hasStorage = storage != null && !string.IsNullOrEmpty(snapshot.StorageId);
 
+            ValidateHardwareId(result, snapshot.MotherboardId, mobo, DiagnosticSubsystem.Motherboard, "MotherboardTray");
+            ValidateHardwareId(result, snapshot.CpuId, cpu, DiagnosticSubsystem.CPU, "CPUSocket");
+            ValidateHardwareId(result, snapshot.GpuId, gpu, DiagnosticSubsystem.GPU, "PCIe_x16");
+            ValidateHardwareId(result, snapshot.CoolerId, cooler, DiagnosticSubsystem.Thermal, "CPUCoolerMount");
+            ValidateHardwareId(result, snapshot.PsuId, psu, DiagnosticSubsystem.Power, "PSU");
+            ValidateHardwareId(result, snapshot.StorageId, storage, DiagnosticSubsystem.Storage, "M2Slot");
+
             if (!hasMobo)
                 AddCritical(result, DiagnosticFaultCode.HARDWARE_DATA_MISSING, DiagnosticSubsystem.Motherboard,
                     "Motherboard data is missing or the snapshot has no motherboard ID.", "MotherboardTray");
@@ -239,6 +246,17 @@ namespace PCTechnician.Simulation
                 && result.PSUStatusResult.CanSafelyPowerContinuous;
 
             return result;
+        }
+
+        private static void ValidateHardwareId<T>(SimulationEvaluationResult result, string snapshotId, T data, DiagnosticSubsystem subsystem, string target)
+            where T : HardwareData
+        {
+            if (data == null || string.IsNullOrEmpty(snapshotId)) return;
+            if (!string.Equals(snapshotId, data.ComponentId, System.StringComparison.OrdinalIgnoreCase))
+            {
+                AddCritical(result, DiagnosticFaultCode.HARDWARE_ID_MISMATCH, subsystem,
+                    $"Snapshot expects hardware ID '{snapshotId}', but supplied data asset is '{data.ComponentId}'.", target);
+            }
         }
 
         private static void AddCompatibilityFault(

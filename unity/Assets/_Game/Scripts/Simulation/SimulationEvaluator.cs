@@ -136,6 +136,13 @@ namespace PCTechnician.Simulation
                 {
                     if (explicitConnections.Contains(rail)) continue;
 
+                    if (!hasPsu)
+                    {
+                        AddError(result, DiagnosticFaultCode.PSU_SOURCE_CONNECTOR_MISSING, DiagnosticSubsystem.Power,
+                            "A power rail is marked connected, but PSU data is unavailable; no physical source connector can be resolved.", rail);
+                        continue;
+                    }
+
                     PowerConnectorType type;
                     if (rail == RAIL_24PIN) type = PowerConnectorType.ATX24Pin;
                     else if (rail == RAIL_CPU_EPS) type = PowerConnectorType.CPUEPS8Pin;

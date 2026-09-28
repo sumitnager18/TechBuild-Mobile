@@ -4,6 +4,21 @@ All notable changes to the PC Technician Simulator architecture and codebase are
 
 ---
 
+## [0.2.1] - Stage 2.1 Hardening
+
+### Added
+- Explicit PSU source connector inventory and source-to-destination connection state.
+- Connector exhaustion protection and legacy rail snapshot compatibility.
+- PSU transient evaluation driven by configured transient excursion percentage.
+- Structured missing hardware/source data diagnostics; removed silent CPU power fallbacks.
+- GPU PCIe generation and storage form-factor/protocol compatibility validation.
+- Centralized thermal gameplay parameters and CPU-specific maximum safe temperature handling.
+- Field-based Unity serialization for simulation snapshots and evaluation/result structs.
+
+### Changed
+- Documentation no longer claims the whole simulation layer is pure C# when ScriptableObject hardware data is involved.
+- Tests now construct explicit hardware data for power and simulation scenarios.
+
 ## [0.2.0] - Prototype 0.1.0 Stage 2: Core Simulation, Power Graph & Thermal Foundation
 
 ### Added

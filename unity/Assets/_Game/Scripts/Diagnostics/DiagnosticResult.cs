@@ -5,11 +5,11 @@ namespace PCTechnician.Diagnostics
     [Serializable]
     public struct DiagnosticResult
     {
-        public DiagnosticFaultCode FaultCode { get; set; }
-        public FaultSeverity Severity { get; set; }
-        public DiagnosticSubsystem Subsystem { get; set; }
-        public string Message { get; set; }
-        public string SuggestedInspectionTarget { get; set; }
+        public DiagnosticFaultCode FaultCode;
+        public FaultSeverity Severity;
+        public DiagnosticSubsystem Subsystem;
+        public string Message;
+        public string SuggestedInspectionTarget;
 
         public bool IsFatal => Severity == FaultSeverity.Error || Severity == FaultSeverity.Critical;
 

@@ -3,18 +3,15 @@ using System;
 namespace PCTechnician.Thermal
 {
     /// <summary>
-    /// Deterministic, lightweight thermal model.
-    /// Pure C# class independent of Unity visual GameObjects and physics.
+    /// Deterministic gameplay thermal model.
+    /// This is a tunable simulation model, not a physically validated thermal solver.
     /// </summary>
     public static class ThermalModel
     {
-        public const float DEFAULT_AMBIENT_TEMP = 22.0f;
-        public const float CRITICAL_TEMP_THRESHOLD = 98.0f;
-        public const float THROTTLING_TEMP_THRESHOLD = 88.0f;
+        public const float DEFAULT_AMBIENT_TEMP = ThermalModelParameters.DefaultAmbientTempCelsius;
+        public const float CRITICAL_TEMP_THRESHOLD = ThermalModelParameters.DefaultMaxSafeTempCelsius;
+        public const float THROTTLING_TEMP_THRESHOLD = ThermalModelParameters.DefaultMaxSafeTempCelsius - ThermalModelParameters.DefaultThrottlingOffsetCelsius;
 
-        /// <summary>
-        /// Calculates CPU temperature and thermal state deterministically.
-        /// </summary>
         public static ThermalCalculationResult CalculateCPUThermals(
             float cpuPowerWatts,
             bool coolerInstalled,
@@ -24,77 +21,78 @@ namespace PCTechnician.Thermal
             bool fanConnected,
             float pasteAmount,
             float caseAirflowFactor = 1.0f,
-            float ambientTemp = DEFAULT_AMBIENT_TEMP)
+            float ambientTemp = ThermalModelParameters.DefaultAmbientTempCelsius,
+            float maxSafeTempCelsius = ThermalModelParameters.DefaultMaxSafeTempCelsius)
         {
-            // Case 1: No cooler mounted at all -> Immediate thermal trip
+            maxSafeTempCelsius = Math.Max(50.0f, maxSafeTempCelsius);
+            float throttlingThreshold = Math.Max(40.0f, maxSafeTempCelsius - ThermalModelParameters.DefaultThrottlingOffsetCelsius);
+
             if (!coolerInstalled)
             {
+                float emergencyTemp = maxSafeTempCelsius + 10.0f;
                 return new ThermalCalculationResult(
-                    105.0f,
+                    emergencyTemp,
                     ThermalState.Critical,
                     0.0f,
                     0.0f,
                     0.0f,
-                    "CRITICAL FAULT: CPU cooler is not installed. Emergency thermal halt."
+                    $"CRITICAL FAULT: CPU cooler is not installed. Estimated temperature exceeds the {maxSafeTempCelsius:F0}°C CPU safety limit."
                 );
             }
 
-            // Case 2: Cooler mount quality (based on screw tightening)
-            float screwRatio = totalScrewsRequired > 0 
-                ? Math.Clamp((float)coolerScrewsTightened / totalScrewsRequired, 0f, 1f) 
+            float screwRatio = totalScrewsRequired > 0
+                ? Math.Clamp((float)coolerScrewsTightened / totalScrewsRequired, 0f, 1f)
                 : 1f;
-            
-            // Loose cooler has poor contact pressure
-            float mountQuality = Math.Max(0.15f, screwRatio);
 
-            // Fan connection penalty (fan disconnected reduces cooler capacity by 65%)
-            float activeCoolerCapacity = fanConnected ? coolerTdpRating : (coolerTdpRating * 0.35f);
+            float mountQuality = Math.Max(ThermalModelParameters.MinimumMountQuality, screwRatio);
+            float activeCoolerCapacity = fanConnected
+                ? coolerTdpRating
+                : coolerTdpRating * ThermalModelParameters.DisconnectedFanCapacityFactor;
 
-            // Thermal paste efficiency
             float pasteEfficiency = ThermalPasteEvaluation.CalculateEfficiency(pasteAmount);
+            float rCooler = (ThermalModelParameters.CoolerResistanceNumerator /
+                             Math.Max(ThermalModelParameters.MinimumCoolerCapacityWatts, activeCoolerCapacity)) *
+                            ThermalModelParameters.CoolerResistanceScale;
+            float rContact = ThermalModelParameters.ContactResistanceScale /
+                             (Math.Max(ThermalModelParameters.MinimumPasteEfficiency, pasteEfficiency) *
+                              Math.Max(ThermalModelParameters.MinimumMountQuality, mountQuality));
 
-            // Effective thermal resistance formula (documented in architecture)
-            // Cooler base resistance
-            float rCooler = (150.0f / Math.Max(50.0f, activeCoolerCapacity)) * 0.24f;
-            // Contact interface resistance (penalized by poor paste or uneven screw torque)
-            float rContact = 0.22f / (Math.Max(0.08f, pasteEfficiency) * Math.Max(0.15f, mountQuality));
-            
-            float effectiveResistance = (rCooler + rContact) / Math.Max(0.5f, caseAirflowFactor);
+            float effectiveResistance = (rCooler + rContact) /
+                                        Math.Max(ThermalModelParameters.MinimumAirflowFactor, caseAirflowFactor);
             float tempRise = cpuPowerWatts * effectiveResistance;
             float finalTemp = ambientTemp + tempRise;
 
-            // Determine thermal state and performance multiplier
             ThermalState state;
             float perfMultiplier;
             string message;
 
-            if (finalTemp > CRITICAL_TEMP_THRESHOLD)
+            if (finalTemp > maxSafeTempCelsius)
             {
                 state = ThermalState.Critical;
                 perfMultiplier = 0.0f;
-                message = $"CPU temperature {finalTemp:F1}°C exceeds 98°C safe threshold. Emergency thermal shutdown.";
+                message = $"CPU temperature {finalTemp:F1}°C exceeds the configured {maxSafeTempCelsius:F1}°C safe threshold. Emergency thermal shutdown.";
             }
-            else if (finalTemp >= THROTTLING_TEMP_THRESHOLD)
+            else if (finalTemp >= throttlingThreshold)
             {
                 state = ThermalState.Throttling;
-                // Linear drop from 1.0 down to 0.60
-                float tRatio = (finalTemp - THROTTLING_TEMP_THRESHOLD) / (CRITICAL_TEMP_THRESHOLD - THROTTLING_TEMP_THRESHOLD);
+                float range = Math.Max(1.0f, maxSafeTempCelsius - throttlingThreshold);
+                float tRatio = (finalTemp - throttlingThreshold) / range;
                 perfMultiplier = Math.Clamp(1.0f - (tRatio * 0.40f), 0.60f, 1.0f);
                 message = $"CPU is thermal throttling at {finalTemp:F1}°C ({perfMultiplier * 100:F0}% performance).";
             }
-            else if (finalTemp >= 78.0f)
+            else if (finalTemp >= ThermalModelParameters.HotThresholdCelsius)
             {
                 state = ThermalState.Hot;
                 perfMultiplier = 1.0f;
                 message = $"CPU operating hot at {finalTemp:F1}°C under sustained load.";
             }
-            else if (finalTemp >= 65.0f)
+            else if (finalTemp >= ThermalModelParameters.WarmThresholdCelsius)
             {
                 state = ThermalState.Warm;
                 perfMultiplier = 1.0f;
                 message = $"CPU operating in normal warm range ({finalTemp:F1}°C).";
             }
-            else if (finalTemp >= 35.0f)
+            else if (finalTemp >= ThermalModelParameters.NormalThresholdCelsius)
             {
                 state = ThermalState.Normal;
                 perfMultiplier = 1.0f;

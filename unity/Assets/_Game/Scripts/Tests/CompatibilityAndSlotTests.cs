@@ -73,14 +73,40 @@ namespace PCTechnician.Tests
             Assert(!ramMismatchResult.IsCompatible && ramMismatchResult.ErrorCode == CompatibilityEngine.ERROR_RAM_TYPE_MISMATCH,
                 "Incompatible DDR4 RAM is rejected with ERROR_RAM_TYPE_MISMATCH.");
 
-            // Test 5: Cooler Socket Fit
+            // Test 5: GPU PCIe generation and x16 interface
+            var gpuGen4 = ScriptableObject.CreateInstance<GPUData>();
+            gpuGen4.SetRuntimeValues("gpu_04", "VectorX VX-680", "VectorX", 180, 1, 260, "Gen 4.0", "PCIe_16x");
+            var gpuResult = CompatibilityEngine.ValidateGPUWithMotherboard(gpuGen4, mobo);
+            Assert(gpuResult.IsCompatible, "PCIe Gen4 x16 GPU is accepted by a Gen5 x16 motherboard.");
+
+            var gpuGen6 = ScriptableObject.CreateInstance<GPUData>();
+            gpuGen6.SetRuntimeValues("gpu_06", "VectorX VX-980", "VectorX", 300, 2, 420, "Gen 6.0", "PCIe_16x");
+            var gpuGenerationMismatch = CompatibilityEngine.ValidateGPUWithMotherboard(gpuGen6, mobo);
+            Assert(!gpuGenerationMismatch.IsCompatible &&
+                gpuGenerationMismatch.ErrorCode == CompatibilityEngine.ERROR_GPU_PCIE_GENERATION_MISMATCH,
+                "GPU generation beyond the motherboard slot generation is rejected.");
+
+            // Test 6: Storage form factor and protocol
+            var nvmeGen4 = ScriptableObject.CreateInstance<StorageData>();
+            nvmeGen4.SetRuntimeValues("ssd_04", "HyperDrive 2TB", "HyperDrive", "M2_2280", 2000, "NVMe_PCIe4");
+            var storageResult = CompatibilityEngine.ValidateStorageWithMotherboard(nvmeGen4, mobo);
+            Assert(storageResult.IsCompatible, "M.2 2280 NVMe Gen4 storage is accepted by a Gen5 M.2 slot.");
+
+            var sataM2 = ScriptableObject.CreateInstance<StorageData>();
+            sataM2.SetRuntimeValues("ssd_sata", "Legacy M2 SATA", "Legacy", "M2_2280", 1000, "SATA");
+            var storageMismatch = CompatibilityEngine.ValidateStorageWithMotherboard(sataM2, mobo);
+            Assert(!storageMismatch.IsCompatible &&
+                storageMismatch.ErrorCode == CompatibilityEngine.ERROR_STORAGE_INTERFACE_MISMATCH,
+                "Unsupported M.2 storage protocol is rejected.");
+
+            // Test 7: Cooler Socket Fit
             var cooler = ScriptableObject.CreateInstance<CoolerData>();
             cooler.SetRuntimeValues("cooler_01", "ArcticBreeze A-4", "ArcticBreeze", "AM5_FICTIONAL", 180);
 
             var coolerResult = CompatibilityEngine.ValidateCoolerWithCPU(cooler, cpuCompatible);
             Assert(coolerResult.IsCompatible, "AM5_FICTIONAL cooler bracket matches AM5_FICTIONAL CPU.");
 
-            // Test 6: PSU Power Capacity Check
+            // Test 8: PSU Power Capacity Check
             var psu = ScriptableObject.CreateInstance<PSUData>();
             psu.SetRuntimeValues("psu_01", "VoltEdge 750 Bronze", "VoltEdge", 750, "80_Plus_Bronze");
 
@@ -91,7 +117,7 @@ namespace PCTechnician.Tests
             Assert(!psuOverloadResult.IsCompatible && psuOverloadResult.ErrorCode == CompatibilityEngine.ERROR_PSU_INSUFFICIENT_POWER,
                 "750W PSU rejects 850W total system load.");
 
-            // Test 7: ComponentSlot Acceptance and Occupancy
+            // Test 9: ComponentSlot Acceptance and Occupancy
             var slotGameObject = new GameObject("TestSlot");
             var slot = slotGameObject.AddComponent<ComponentSlot>();
             slot.Configure("cpu_socket_01", "CPU Socket", ComponentCategory.CPU);

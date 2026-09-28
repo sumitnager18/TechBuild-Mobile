@@ -13,21 +13,28 @@ namespace PCTechnician.Power
     [Serializable]
     public struct PSUEvaluationResult
     {
-        public PSUStatus Status { get; set; }
-        public float RatedWattage { get; set; }
-        public float ContinuousHeadroomWatts { get; set; }
-        public float PeakHeadroomWatts { get; set; }
-        public string Message { get; set; }
+        public PSUStatus Status;
+        public float RatedWattage;
+        public float ContinuousHeadroomWatts;
+        public float PeakHeadroomWatts;
+        public float TransientHeadroomWatts;
+        public string Message;
 
         public bool CanSafelyPowerContinuous => Status == PSUStatus.Healthy || Status == PSUStatus.Marginal;
 
-        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, string message)
+        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, float transientHeadroom, string message)
         {
             Status = status;
             RatedWattage = rated;
             ContinuousHeadroomWatts = continuousHeadroom;
             PeakHeadroomWatts = peakHeadroom;
+            TransientHeadroomWatts = messageCompatiblePlaceholder;
             Message = message;
+        }
+
+        public PSUEvaluationResult(PSUStatus status, float rated, float continuousHeadroom, float peakHeadroom, string message)
+            : this(status, rated, continuousHeadroom, peakHeadroom, peakHeadroom, message)
+        {
         }
     }
 }

@@ -9,20 +9,20 @@ namespace PCTechnician.Simulation
     [Serializable]
     public class SimulationEvaluationResult
     {
-        public bool CanPostSucceed { get; set; }
-        public bool IsAssembledCorrectly { get; set; }
-        public bool IsPoweredCorrectly { get; set; }
-        public bool IsCpuThermallySafe { get; set; }
-        public bool IsGpuPowered { get; set; }
+        public bool CanPostSucceed;
+        public bool IsAssembledCorrectly;
+        public bool IsPoweredCorrectly;
+        public bool IsCpuThermallySafe;
+        public bool IsGpuPowered;
 
-        public PowerLoadProfile EstimatedLoad { get; set; }
-        public PSUEvaluationResult PSUStatusResult { get; set; }
-        public ThermalCalculationResult CPUThermalResult { get; set; }
+        public PowerLoadProfile EstimatedLoad;
+        public PSUEvaluationResult PSUStatusResult;
+        public ThermalCalculationResult CPUThermalResult;
 
-        public List<DiagnosticResult> DiagnosticFaults { get; set; } = new List<DiagnosticResult>();
+        public List<DiagnosticResult> DiagnosticFaults = new List<DiagnosticResult>();
 
-        public DiagnosticResult PrimaryFault => DiagnosticFaults.Count > 0 
-            ? DiagnosticFaults[0] 
+        public DiagnosticResult PrimaryFault => DiagnosticFaults.Count > 0
+            ? DiagnosticFaults[0]
             : DiagnosticResult.Ok();
     }
 }

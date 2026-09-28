@@ -18,11 +18,12 @@ namespace PCTechnician.Hardware
         public int ReadSpeedMbS => readSpeedMbS;
         public int WriteSpeedMbS => writeSpeedMbS;
 
-        public void SetRuntimeValues(string id, string model, string mfg, string form, int capacity)
+        public void SetRuntimeValues(string id, string model, string mfg, string form, int capacity, string protocol = "NVMe_PCIe4")
         {
             InitializeBase(id, model, mfg, ComponentCategory.Storage);
             formFactor = form;
             capacityGb = capacity;
+            interfaceProtocol = protocol;
         }
     }
 }

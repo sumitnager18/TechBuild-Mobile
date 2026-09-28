@@ -5,9 +5,9 @@ namespace PCTechnician.Power
     [Serializable]
     public struct PowerLoadProfile
     {
-        public float ContinuousLoadWatts { get; set; }
-        public float PeakLoadWatts { get; set; }
-        public float TransientLoadWatts { get; set; }
+        public float ContinuousLoadWatts;
+        public float PeakLoadWatts;
+        public float TransientLoadWatts;
 
         public PowerLoadProfile(float continuous, float peak, float transient)
         {

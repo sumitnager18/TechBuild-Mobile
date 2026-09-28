@@ -1,42 +1,41 @@
 using System;
 using System.Collections.Generic;
+using PCTechnician.Power;
 
 namespace PCTechnician.Simulation
 {
-    /// <summary>
-    /// Pure C# serializable data snapshot of a PC build.
-    /// Completely decoupled from Unity GameObjects, instances, and scene memory addresses.
-    /// </summary>
     [Serializable]
     public class SimulationSnapshot
     {
-        public int Version { get; set; } = 1;
-        public long Timestamp { get; set; }
+        public const int CURRENT_VERSION = 2;
 
-        // Component Identifiers
-        public string MotherboardId { get; set; }
-        public string CpuId { get; set; }
-        public string CoolerId { get; set; }
-        public string GpuId { get; set; }
-        public string PsuId { get; set; }
-        public string StorageId { get; set; }
-        public List<string> RamModuleIds { get; set; } = new List<string>();
+        public int Version = CURRENT_VERSION;
+        public long Timestamp;
 
-        // Physical Assembly States
-        public bool SidePanelOpen { get; set; }
-        public bool CpuSocketLatched { get; set; }
-        public float ThermalPasteAmount { get; set; }
-        public int CoolerScrewsTightened { get; set; }
-        public bool CoolerFanConnected { get; set; }
-        public bool RamLatched { get; set; }
-        public bool GpuPcieLatched { get; set; }
-        public bool GpuBracketScrewed { get; set; }
-        public bool StorageM2Screwed { get; set; }
+        public string MotherboardId;
+        public string CpuId;
+        public string CoolerId;
+        public string GpuId;
+        public string PsuId;
+        public string StorageId;
+        public List<string> RamModuleIds = new List<string>();
 
-        // Power Cable Connections (Connected Rails)
-        public List<string> ConnectedPowerRails { get; set; } = new List<string>();
+        public bool SidePanelOpen;
+        public bool CpuSocketLatched;
+        public float ThermalPasteAmount;
+        public int CoolerScrewsTightened;
+        public bool CoolerFanConnected;
+        public bool RamLatched;
+        public bool GpuPcieLatched;
+        public bool GpuBracketScrewed;
+        public bool StorageM2Screwed;
 
-        // Runtime Power Switch State
-        public bool PowerSwitchOn { get; set; }
+        // Legacy rail IDs retained for backwards compatibility.
+        public List<string> ConnectedPowerRails = new List<string>();
+
+        // Preferred v2 representation: exact PSU source connector identity.
+        public List<PowerConnectionState> ConnectedPowerConnections = new List<PowerConnectionState>();
+
+        public bool PowerSwitchOn;
     }
 }

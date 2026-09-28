@@ -40,11 +40,15 @@ namespace PCTechnician.Hardware
         public bool Requires24Pin => requires24Pin;
         public bool RequiresCpuEps8Pin => requiresCpuEps8Pin;
 
-        public void SetRuntimeValues(string id, string model, string mfg, string socket, string ramType)
+        public void SetRuntimeValues(string id, string model, string mfg, string socket, string ramType,
+            string pcieGeneration = "Gen 5.0", string supportedM2FormFactor = "M2_2280", string supportedM2Protocol = "NVMe_PCIe5")
         {
             InitializeBase(id, model, mfg, ComponentCategory.Motherboard);
             socketType = socket;
             memoryType = ramType;
+            pcieX16Generation = pcieGeneration;
+            m2FormFactor = supportedM2FormFactor;
+            m2InterfaceProtocol = supportedM2Protocol;
         }
     }
 }

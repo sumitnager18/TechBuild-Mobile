@@ -1,5 +1,5 @@
 # PC Technician Simulator — System Architecture Document
-Version: 1.1.0 (Stage 2: Core Simulation, Power Graph & Thermal Foundation)
+Version: 1.2.0 (Stage 2.1 Hardening)
 Engine Target: Unity 6 (URP) | Language: C# | Target Platform: Android (ARM64)
 Prototype Web Verification Layer: Three.js / WebGL / React 19 / TypeScript
 
@@ -8,9 +8,10 @@ Prototype Web Verification Layer: Three.js / WebGL / React 19 / TypeScript
 ## 1. Architectural Overview & Separation of Concerns
 
 PC Technician Simulator strictly decouples hardware simulation from visual presentation:
-1. **Simulation Layer (Pure Logic & State)**:
-   - Contains ZERO dependencies on `UnityEngine.GameObject`, `MeshRenderer`, `Transform`, `Collider`, `Animator`, or `Camera`.
-   - Executes deterministically in pure C# memory space.
+1. **Simulation Logic & State**:
+   - Core evaluators, power graph, thermal model, diagnostics, and snapshot state have no GameObject/scene dependencies.
+   - Hardware specification assets are intentionally Unity `ScriptableObject` data definitions; therefore the entire simulation assembly is not accurately described as a zero-UnityEngine pure-C# layer.
+   - Deterministic evaluation is performed from explicit inputs and stable IDs.
    - Evaluates on meaningful state transitions (cable attached, screw torqued) rather than per-frame Update loops.
 2. **Presentation Layer (Visuals & Animation)**:
    - Unity URP presentation / Three.js verification harness.
@@ -63,8 +64,10 @@ The Power Graph is a directed network connecting the power source (`PSU`) to con
 - `Rail_PCIe_GPU`: Connects PSU PCIe 8-pin / 12V-2x6 rail to GPU VRMs.
 
 ### Connector Validation Invariants
-- Each `PowerNode` specifies its strict `PowerConnectorType` (ATX24Pin, CPUEPS8Pin, PCIe8Pin).
-- Incompatible pinouts (e.g. plugging a CPU EPS cable into a PCIe 8-pin port) are rejected deterministically with structured diagnostic faults.
+- Each `PowerNode` specifies its strict `PowerConnectorType`.
+- Each PSU connector is a unique `PowerSourceConnector` resource with an identity and capacity.
+- A source connector cannot be consumed by two destinations.
+- Exact source-to-rail mappings are persisted in `PowerConnectionState`; legacy rail-only snapshots are still accepted.
 
 ### Power Load Formulas
 - **Continuous Load ($W_{cont}$)**:
@@ -76,10 +79,13 @@ The Power Graph is a directed network connecting the power source (`PSU`) to con
   $$W_{trans} = P_{cpu,peak} + P_{gpu,transient} + W_{base} + 40\text{W}$$
 
 ### PSU Evaluation Model
-- `Healthy`: Headroom $\ge 15\%$ of rated capacity.
-- `Marginal`: Headroom $< 15\%$ but continuous load within limits.
-- `Insufficient`: Headroom $< 0$ (load exceeds PSU capacity).
-- `MissingConnector`: Available modular cables < required device inputs.
+- Continuous capacity is checked against the PSU's rated wattage.
+- Peak load is checked against rated wattage.
+- Transient load is checked against `Wattage × TransientExcursionPercentage / 100`; no unrelated hard-coded 10% allowance is used by the hardened evaluator.
+- `Healthy`: at least 15% continuous headroom.
+- `Marginal`: less than 15% continuous headroom while capacity remains sufficient.
+- `Insufficient`: continuous, peak, or configured transient capacity is exceeded.
+- `MissingConnector`: required PSU connector inventory is unavailable.
 
 ---
 
@@ -115,12 +121,10 @@ Calculates component temperatures without fluid dynamics or CFD grids:
    $$T_{cpu} = T_{ambient} + (P_{cpu} \times R_{eff})$$
 
 ### Thermal States & Throttling
-- $T_{cpu} < 35^\circ\text{C}$: `Cold` (100% clock)
-- $35^\circ\text{C} \le T_{cpu} < 65^\circ\text{C}$: `Normal` (100% clock)
-- $65^\circ\text{C} \le T_{cpu} < 78^\circ\text{C}$: `Warm` (100% clock)
-- $78^\circ\text{C} \le T_{cpu} < 88^\circ\text{C}$: `Hot` (100% clock)
-- $88^\circ\text{C} \le T_{cpu} \le 98^\circ\text{C}$: `Throttling` (clock scaled down from 100% to 60%)
-- $T_{cpu} > 98^\circ\text{C}$: `Critical` (emergency shutdown, 0% clock)
+- CPU safety limit comes from `CPUData.MaxSafeTempCelsius`.
+- Throttling begins at `MaxSafeTempCelsius - 7°C` by default.
+- Other state thresholds and thermal coefficients are centralized in `ThermalModelParameters`.
+- The thermal model is explicitly a gameplay-tuning model, not a physically validated CFD/thermal solver.
 
 ---
 
@@ -128,7 +132,7 @@ Calculates component temperatures without fluid dynamics or CFD grids:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "timestamp": 1742080000,
   "motherboardId": "ApexForge_A870",
   "cpuId": "NovaCore_N7_7600",
@@ -144,6 +148,11 @@ Calculates component temperatures without fluid dynamics or CFD grids:
   "ramLatched": true,
   "gpuPcieLatched": true,
   "connectedPowerRails": ["Rail_ATX_24Pin", "Rail_CPU_EPS", "Rail_PCIe_GPU"],
+  "connectedPowerConnections": [
+    {"railId": "Rail_ATX_24Pin", "sourceConnectorId": "PSU_ATX24_1"},
+    {"railId": "Rail_CPU_EPS", "sourceConnectorId": "PSU_EPS8_1"},
+    {"railId": "Rail_PCIe_GPU", "sourceConnectorId": "PSU_PCIE8_1"}
+  ],
   "powerSwitchOn": true
 }
 ```

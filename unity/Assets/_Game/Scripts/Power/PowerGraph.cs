@@ -11,6 +11,7 @@ namespace PCTechnician.Power
     {
         private readonly Dictionary<string, PowerNode> nodes = new Dictionary<string, PowerNode>();
         private readonly Dictionary<string, PowerSourceConnector> sourceConnectors = new Dictionary<string, PowerSourceConnector>();
+        private readonly Dictionary<string, string> connectedSourceByNode = new Dictionary<string, string>();
 
         public IReadOnlyDictionary<string, PowerNode> Nodes => nodes;
         public IReadOnlyDictionary<string, PowerSourceConnector> SourceConnectors => sourceConnectors;
@@ -19,6 +20,7 @@ namespace PCTechnician.Power
         {
             nodes.Clear();
             sourceConnectors.Clear();
+            connectedSourceByNode.Clear();
         }
 
         public void AddNode(PowerNode node)
@@ -77,6 +79,7 @@ namespace PCTechnician.Power
             }
 
             source.IsConnected = true;
+            connectedSourceByNode[nodeId] = sourceConnectorId;
             node.Connect();
             error = string.Empty;
             return true;
@@ -106,16 +109,13 @@ namespace PCTechnician.Power
         {
             if (!nodes.TryGetValue(nodeId, out var node)) return;
 
-            foreach (var pair in sourceConnectors)
+            if (connectedSourceByNode.TryGetValue(nodeId, out var sourceConnectorId) &&
+                sourceConnectors.TryGetValue(sourceConnectorId, out var source))
             {
-                if (pair.Value.IsConnected &&
-                    pair.Value.ConnectorType == node.ConnectorType)
-                {
-                    pair.Value.IsConnected = false;
-                    break;
-                }
+                source.IsConnected = false;
             }
 
+            connectedSourceByNode.Remove(nodeId);
             node.Disconnect();
         }
 

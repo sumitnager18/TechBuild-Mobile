@@ -111,7 +111,7 @@ namespace PCTechnician.Hardware
         private static int ParseGeneration(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
-            var normalized = value.Trim().ToLowerInvariant().Replace("gen", "").Replace(" ", "");
+            var normalized = value.Trim().ToLowerInvariant().Replace("gen", "").Replace("pcie", "").Replace(" ", "").Replace(".", "");
             if (float.TryParse(normalized, System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out var number))
                 return (int)Math.Round(number * 10.0);
